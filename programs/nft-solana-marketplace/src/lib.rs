@@ -23,7 +23,7 @@ use tk22_non_transf_mint::{
     initialize_non_transferable_mint, InitializeNonTransferableMint, TokenAccount, Mint
 };
 
-declare_id!("HLsC3GxE8t23SFaCGo5CgeRmUrDNzhu8rciBc6ysZr1B");
+declare_id!("88b6N7f2vXTqYAo3SLQGB2ShM7ctrAoxuFA6XaUwWCAu");
 
 #[program]
 pub mod nft_solana_marketplace {
