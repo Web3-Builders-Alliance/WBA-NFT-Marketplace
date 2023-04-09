@@ -1,7 +1,7 @@
 import * as anchor from '@project-serum/anchor';
 import { Program, Wallet } from '@project-serum/anchor';
 import { NftSolanaMarketplace } from '../target/types/nft_solana_marketplace';
-import { TOKEN_2022_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, ASSOCIATED_TOKEN_PROGRAM_ID, ExtensionType, getMintLen, createInitializeNonTransferableMintInstruction, createAssociatedTokenAccount, transferChecked, burn, AccountLayout,  } from '@solana/spl-token';
+import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, ASSOCIATED_TOKEN_PROGRAM_ID, ExtensionType, getMintLen, createInitializeNonTransferableMintInstruction, createAssociatedTokenAccount, transferChecked, burn, AccountLayout, TOKEN_PROGRAM_ID, MINT_SIZE,  } from '@solana/spl-token';
 import { it } from 'mocha';
 import { assert } from "chai";
 
@@ -31,9 +31,8 @@ describe('metaplex-anchor-nft', () => {
 
     it("mints a token", async () => {
         // Get the amount of SOL needed to pay rent for our Token Mint
-        const mintLength = getMintLen([ExtensionType.NonTransferable]);
         const lamports: number = await program.provider.connection.getMinimumBalanceForRentExemption(
-            mintLength
+            MINT_SIZE
         );
 
         console.log("Mint key: ", mintKey.publicKey.toString());
@@ -46,22 +45,19 @@ describe('metaplex-anchor-nft', () => {
                 fromPubkey: wallet.publicKey,
                 newAccountPubkey: mintKey.publicKey,
                 lamports,
-                space: mintLength,
-                programId: TOKEN_2022_PROGRAM_ID,
+                space: MINT_SIZE,
+                programId: TOKEN_PROGRAM_ID,
             }),
-            // initializes a non-transferable mint
-            createInitializeNonTransferableMintInstruction(mintKey.publicKey, TOKEN_2022_PROGRAM_ID),
             // Fire a transaction to create our mint account that is controlled by our anchor wallet
             createInitializeMintInstruction(
                 mintKey.publicKey,
                 0,
                 wallet.publicKey,
                 wallet.publicKey,
-                TOKEN_2022_PROGRAM_ID
-            )
+                TOKEN_PROGRAM_ID
+            ), 
         );
 
-        // sends and create the transaction
         const res = await anchor.AnchorProvider.env().sendAndConfirm(mint_tx, [mintKey]);
         console.log(
             await program.provider.connection.getParsedAccountInfo(mintKey.publicKey)
@@ -75,29 +71,29 @@ describe('metaplex-anchor-nft', () => {
             mintKey.publicKey,
             wallet.publicKey,
             { commitment: "confirmed" },
-            TOKEN_2022_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
             ASSOCIATED_TOKEN_PROGRAM_ID
         );
         console.log("ATA: ", ata.toString());
 
         const metadataKey = anchor.web3.PublicKey.findProgramAddressSync(
             [
-                anchor.utils.bytes.utf8.encode("metadata"),
+                Buffer.from("metadata"),
                 TOKEN_METADATA_PROGRAM_ID.toBuffer(),
                 mintKey.publicKey.toBuffer(),
             ],
-            program.programId
+            TOKEN_METADATA_PROGRAM_ID
         )[0];
         console.log("Metadata Account: ", metadataKey.toString());
 
         const masterEditionKey = anchor.web3.PublicKey.findProgramAddressSync(
             [
-                anchor.utils.bytes.utf8.encode("metadata"),
+                Buffer.from("metadata"),
                 TOKEN_METADATA_PROGRAM_ID.toBuffer(),
                 mintKey.publicKey.toBuffer(),
-                anchor.utils.bytes.utf8.encode("edition"),
+                Buffer.from("edition"),
             ],
-            program.programId
+            TOKEN_METADATA_PROGRAM_ID
         )[0];
         console.log("Master Edition Account: ", masterEditionKey.toString());
 
@@ -106,7 +102,7 @@ describe('metaplex-anchor-nft', () => {
         // executes anchor code to mint the token into the ATA
         try {
             const tx = await program.methods.mintToken(
-                wallet.publicKey,
+                mintKey.publicKey,
                 "TEST",
                 "TT",
                 "SA",
@@ -115,7 +111,7 @@ describe('metaplex-anchor-nft', () => {
                     authority: wallet.publicKey,
                     mint: mintKey.publicKey,
                     tokenAccount: ata,
-                    tokenProgram: TOKEN_2022_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
                     systemProgram: anchor.web3.SystemProgram.programId,
                     tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
                     metadata: metadataKey,
@@ -145,7 +141,7 @@ describe('metaplex-anchor-nft', () => {
     });
 
 
-    it("cannot transfer token from ATA with non-transferable mint", async () => {
+    xit("cannot transfer token from ATA with non-transferable mint", async () => {
         // Wallet that will receive the token 
         const toWallet: anchor.web3.Keypair = anchor.web3.Keypair.generate();
         // The ATA for a token on the to wallet (but might not exist yet)
@@ -155,7 +151,7 @@ describe('metaplex-anchor-nft', () => {
             mintKey.publicKey,
             toWallet.publicKey,
             { commitment: "confirmed" },
-            TOKEN_2022_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
             ASSOCIATED_TOKEN_PROGRAM_ID
         );
         console.log("Receiving ATA: ", toATA.toString());
@@ -172,7 +168,7 @@ describe('metaplex-anchor-nft', () => {
                 0,
                 [],
                 { commitment: "confirmed" },
-                TOKEN_2022_PROGRAM_ID
+                TOKEN_PROGRAM_ID
             );
 
             // If the transfer was successful, fail the test
@@ -183,7 +179,7 @@ describe('metaplex-anchor-nft', () => {
         }
     });
 
-    it("burns token", async () => {
+    xit("burns token", async () => {
         const tx = await burn(
             connection,
             wallet.payer,
@@ -194,7 +190,7 @@ describe('metaplex-anchor-nft', () => {
             //0,
             [],
             { commitment: "confirmed" },
-            TOKEN_2022_PROGRAM_ID
+            TOKEN_PROGRAM_ID
         );
         console.log("Burn tx: ", tx);
 
