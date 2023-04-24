@@ -1,6 +1,6 @@
 use anchor_lang::{
     prelude::*,
-    solana_program::program::invoke,
+    solana_program::{program::invoke},
     system_program::{create_account, CreateAccount, System},
 };
 use anchor_spl::{
@@ -14,7 +14,7 @@ use mpl_token_metadata::{
     ID as TOKEN_METADATA_PROGRAM_ID,
 };
 
-pub fn create_and_initialize(ctx: Context<CreateMintAndATA>) -> Result<()> {
+pub fn create_initialize_and_mint(ctx: Context<CreateInitMint>) -> Result<()> {
     msg!("Creating mint account...");
     msg!("Mint: {}", &ctx.accounts.mint.key());
     create_account(
@@ -58,10 +58,6 @@ pub fn create_and_initialize(ctx: Context<CreateMintAndATA>) -> Result<()> {
         },
     ))?;
 
-    Ok(())
-}
-
-pub fn mint(ctx: Context<MintNFT>, name: String, symbol: String, uri: String) -> Result<()> {
     msg!("Minting a token...");
     msg!("Mint: {}", &ctx.accounts.mint.to_account_info().key());
     msg!("Token Address: {}", &ctx.accounts.token_account.key());
@@ -77,6 +73,10 @@ pub fn mint(ctx: Context<MintNFT>, name: String, symbol: String, uri: String) ->
         1,
     )?;
 
+    Ok(())
+}
+
+pub fn mint_nft(ctx: Context<MintNFT>, name: String, symbol: String, uri: String) -> Result<()> {
     // creating a metadata account
     msg!("Metadata account creating...");
     msg!(
@@ -129,7 +129,7 @@ pub fn mint(ctx: Context<MintNFT>, name: String, symbol: String, uri: String) ->
             Some(1),
         ),
         &[
-            ctx.accounts.master_edition.to_account_info(), // Edition account
+            ctx.accounts.master_edition.to_account_info(), // master edition account
             ctx.accounts.mint.to_account_info(),           // mint
             ctx.accounts.authority.to_account_info(), // update authority, mint authority, payer
             ctx.accounts.metadata.to_account_info(),  // Metadata account
@@ -144,7 +144,7 @@ pub fn mint(ctx: Context<MintNFT>, name: String, symbol: String, uri: String) ->
 }
 
 #[derive(Accounts)]
-pub struct CreateMintAndATA<'info> {
+pub struct CreateInitMint<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     /// CHECK: No need to check, it's just a pubkey 
@@ -193,4 +193,3 @@ pub struct MintNFT<'info> {
     pub token_metadata_program: UncheckedAccount<'info>,
     pub rent: Sysvar<'info, Rent>,
 }
-

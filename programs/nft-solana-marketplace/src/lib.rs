@@ -18,21 +18,21 @@ declare_id!("88b6N7f2vXTqYAo3SLQGB2ShM7ctrAoxuFA6XaUwWCAu");
 pub mod mint_nft {
     use super::*;
 
-    pub fn create_and_initialize(
-        ctx: Context<CreateMintAndATA>
+    pub fn create_initialize_and_mint(
+        ctx: Context<CreateInitMint>
     ) -> Result<()> {
-        mint::create_and_initialize(
+        mint::create_initialize_and_mint(
             ctx
         )
     }
 
-    pub fn mint(
+    pub fn mint_nft(
         ctx: Context<MintNFT>, 
         metadata_title: String, 
         metadata_symbol: String, 
         metadata_uri: String,
     ) -> Result<()> {
-        mint::mint(
+        mint::mint_nft(
             ctx,
             metadata_title,
             metadata_symbol,
@@ -40,7 +40,16 @@ pub mod mint_nft {
         )
     }
 
-    // pub fn print
+    pub fn print(
+        ctx: Context<Print>,
+        edition: u64
+    ) -> Result<()> {
+        print::print(
+            ctx,
+            edition
+        )
+    }
+
     // pub fn update_metadata
 
     pub fn sell(
